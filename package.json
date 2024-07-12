@@ -1,14 +1,19 @@
 {
-  "name": "marketplace-app",
-  "scripts": {
-    "dev": "tsx watch src/index.ts"
-  },
-  "dependencies": {
-    "@hono/node-server": "^1.12.0",
-    "hono": "^4.4.13"
-  },
-  "devDependencies": {
-    "@types/node": "^20.11.17",
-    "tsx": "^4.7.1"
-  }
+	"name": "marketplace-app",
+	"scripts": {
+		"start": "tsx server/index.ts",
+		"dev": "tsx watch server/index.ts"
+	},
+	"dependencies": {
+		"@hono/node-server": "^1.12.0",
+		"dotenv": "^16.4.5",
+		"drizzle-orm": "^0.32.0",
+		"hono": "^4.4.13",
+		"postgres": "^3.4.4"
+	},
+	"devDependencies": {
+		"@types/node": "^20.11.17",
+		"drizzle-kit": "^0.23.0",
+		"tsx": "^4.7.1"
+	}
 }
