@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { itemsRoute } from "./routes/items";
-import { signupRoute } from "./routes/signup";
+import { AuthRoutes } from "./routes/auth";
 
 const app = new Hono();
 
-const apiRoutes = app.basePath("/api").route("/items", itemsRoute).route("/signup", signupRoute);
+const apiRoutes = app.basePath("/api").route("/items", itemsRoute).route("/", AuthRoutes);
 
 app.get("/", (c) => {
 	return c.text("Hello Hono!");
