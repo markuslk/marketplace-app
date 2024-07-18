@@ -1,14 +1,16 @@
 import { Hono } from "hono";
 import { itemsRoute } from "./routes/items";
 import { AuthRoutes } from "./routes/auth";
+import { logger } from "hono/logger";
+import { csrf } from "hono/csrf";
 
 const app = new Hono();
 
-const apiRoutes = app.basePath("/api").route("/items", itemsRoute).route("/", AuthRoutes);
+// app.use("*", logger());
 
-app.get("/", (c) => {
-	return c.text("Hello Hono!");
-});
+// app.use(csrf());
+
+const apiRoutes = app.basePath("/api").route("/", AuthRoutes).route("/items", itemsRoute);
 
 export default app;
 
