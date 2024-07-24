@@ -5,6 +5,7 @@ import { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet, useNavigate } from "@tanstack/react-router";
 import { UserId } from "lucia";
 import { toast } from "sonner";
+import { TanStackRouterDevtools } from "@tanstack/router-devtools";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -15,19 +16,35 @@ type User = {
 	email: string;
 } | null;
 
-const RootComponent = () => {
+export const Route = createRootRouteWithContext<MyRouterContext>()({
+	beforeLoad: async ({ context }) => {
+		const queryClient = context.queryClient;
+		try {
+			const data = await queryClient.fetchQuery(userQueryOptions);
+			return data;
+		} catch (err) {
+			return { user: null };
+		}
+	},
+	component: RootComponent,
+});
+
+function RootComponent() {
 	const { user } = Route.useRouteContext();
 	return (
-		<>
-			<Header user={user} />
-			<hr />
-			<Outlet />
-			<Toaster />
-		</>
+		<div className="max-w-screen-2xl mx-auto flex flex-col min-h-screen">
+			<main className="flex-1">
+				<Header user={user} />
+				<hr />
+				<Outlet />
+				<Toaster />
+				<TanStackRouterDevtools initialIsOpen={false} />
+			</main>
+		</div>
 	);
-};
+}
 
-const Header = ({ user }: { user: User }) => {
+function Header({ user }: { user: User }) {
 	const navigate = useNavigate();
 	return (
 		<header className="h-12">
@@ -71,17 +88,4 @@ const Header = ({ user }: { user: User }) => {
 			</nav>
 		</header>
 	);
-};
-
-export const Route = createRootRouteWithContext<MyRouterContext>()({
-	beforeLoad: async ({ context }) => {
-		const queryClient = context.queryClient;
-		try {
-			const data = await queryClient.fetchQuery(userQueryOptions);
-			return data;
-		} catch (err) {
-			return { user: null };
-		}
-	},
-	component: RootComponent,
-});
+}
