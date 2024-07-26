@@ -6,6 +6,7 @@ import { createRootRouteWithContext, Link, Outlet, useNavigate } from "@tanstack
 import { UserId } from "lucia";
 import { toast } from "sonner";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface MyRouterContext {
 	queryClient: QueryClient;
@@ -57,6 +58,9 @@ function Header({ user }: { user: User }) {
 						<Link>My offers</Link>
 						<Link>My auctions</Link>
 						<h5>Welcome, {user.username}</h5>
+						<Avatar className="size-8">
+							<AvatarFallback />
+						</Avatar>
 						<Button
 							onClick={async () => {
 								await fetch("/api/logout", {
