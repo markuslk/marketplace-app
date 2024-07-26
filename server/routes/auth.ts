@@ -5,9 +5,9 @@ import { generateId } from "lucia";
 import { hash } from "@node-rs/argon2";
 import { verify } from "@node-rs/argon2";
 import type { Context } from "../lib/context";
-import { usersTable } from "../db/schema/schema";
+import { sessionsTable, usersTable } from "../db/schema/schema";
 import { TUserCredentialsValidator } from "../../frontend/src/lib/validators/user-credentials-validator";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { getUser } from "../middleware";
 
 export const AuthRoutes = new Hono<Context>()
@@ -15,12 +15,17 @@ export const AuthRoutes = new Hono<Context>()
 		const user = c.var.user;
 		return c.json({ user });
 	})
-	.post("/logout", getUser, async (c) => {
+	.delete("/logout", getUser, async (c) => {
 		const { user, session } = c.var;
 		if (!user || !session) {
 			return console.log("no user or session");
 		}
 		await lucia.invalidateSession(session.id);
+		await db
+			.delete(sessionsTable)
+			.where(and(eq(sessionsTable.id, session.id), eq(sessionsTable.userId, user.id)))
+			.returning()
+			.then((res) => res[0]);
 		return c.json({ message: "Logged out" });
 	})
 	.post("/signup", async (c) => {

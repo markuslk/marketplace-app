@@ -2,7 +2,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
 import { userQueryOptions } from "@/lib/api";
 import { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
 import { UserId } from "lucia";
 import { toast } from "sonner";
 import { TanStackRouterDevtools } from "@tanstack/router-devtools";
@@ -46,7 +46,6 @@ function RootComponent() {
 }
 
 function Header({ user }: { user: User }) {
-	const navigate = useNavigate();
 	return (
 		<header className="h-12">
 			<nav className="flex h-full w-full items-center justify-between gap-2 px-2">
@@ -64,12 +63,12 @@ function Header({ user }: { user: User }) {
 						<Button
 							onClick={async () => {
 								await fetch("/api/logout", {
-									method: "POST",
+									method: "DELETE",
 								});
 								toast("Success", {
 									description: "Logged out",
 								});
-								navigate({ to: "/" });
+								location.reload();
 							}}
 							className={buttonVariants({
 								variant: "outline",
