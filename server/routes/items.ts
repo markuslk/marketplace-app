@@ -1,8 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db";
-import { itemsTable } from "../db/schema/schema";
+import { insertItemSchema, itemsTable } from "../db/schema/schema";
 import type { Context } from "../lib/context";
+import { getUser } from "../middleware";
+import { zValidator } from "@hono/zod-validator";
+import { createItemSchema } from "../shared-types";
 
 export const itemsRoute = new Hono<Context>()
 
@@ -21,28 +24,30 @@ export const itemsRoute = new Hono<Context>()
 		const item = await db
 			.select()
 			.from(itemsTable)
-			.where(and(eq(itemsTable.isPublished, true), eq(itemsTable.id, id)))
+			.where(and(eq(itemsTable.isPublished, true), eq(itemsTable.id, Number(id))))
 			.then((res) => res[0]);
 
 		if (!item) {
 			return c.notFound();
 		}
 		return c.json({ item });
+	})
+
+	.post("/", getUser, zValidator("json", createItemSchema), async (c) => {
+		const item = await c.req.valid("json");
+		const user = c.var.user;
+
+		const validatedItem = insertItemSchema.parse({
+			...item,
+			userId: user?.id,
+		});
+
+		const result = await db
+			.insert(itemsTable)
+			.values(validatedItem)
+			.returning()
+			.then((res) => res[0]);
+
+		c.status(201);
+		return c.json(result);
 	});
-// .post("/", async (c) => {
-// 	// const user = c.get("user");
-// 	// if (!user) {
-// 	// 	console.log("redirected");
-// 	// 	return c.redirect("/login");
-// 	// }
-
-// 	const result = await db
-// 		.insert(itemsTable)
-// 		.values({ })
-// 		.returning()
-// 		.then((res) => res[0]);
-
-// 	c.status(201);
-// 	console.log(result);
-// 	return c.json(result);
-// });

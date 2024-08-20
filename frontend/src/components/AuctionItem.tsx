@@ -84,7 +84,7 @@ const AuctionItem = ({ item }: { item: Item }) => {
 				<div className="flex gap-2 justify-between mt-auto">
 					<Link
 						to="/items/$id"
-						params={{ id: item.id }}
+						params={{ id: item.id.toString() }}
 						className={buttonVariants({
 							variant: "outline",
 							className: "flex gap-2 w-full",
