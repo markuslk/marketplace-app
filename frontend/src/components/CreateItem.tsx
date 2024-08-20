@@ -15,8 +15,13 @@ import { createItem } from "@/lib/api";
 import { createItemSchema } from "@server/shared-types";
 import { useForm } from "@tanstack/react-form";
 import { toast } from "sonner";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { itemsQueryOptions } from "@/lib/api";
 
 const CreateItem = () => {
+	const [open, setOpen] = useState<boolean>(false);
+	const queryClient = useQueryClient();
 	const form = useForm({
 		validatorAdapter: zodValidator(),
 		defaultValues: {
@@ -32,6 +37,11 @@ const CreateItem = () => {
 				toast("New item created", {
 					description: `Succressfully created new item ${newItem.title} with starting price - ${newItem.startingPrice}€ and buy now price - ${newItem.buyNowPrice}€`,
 				});
+				setOpen((prev) => !prev);
+				queryClient.refetchQueries({
+					queryKey: itemsQueryOptions.queryKey,
+					exact: true,
+				});
 			} catch (error) {
 				toast("Error", {
 					description: `Failed to create new item - ${error}`,
@@ -40,7 +50,7 @@ const CreateItem = () => {
 		},
 	});
 	return (
-		<Dialog>
+		<Dialog open={open} onOpenChange={() => setOpen(!open)}>
 			<DialogTrigger asChild>
 				<Button variant="default">Add Item</Button>
 			</DialogTrigger>
