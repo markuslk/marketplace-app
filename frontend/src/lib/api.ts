@@ -1,5 +1,7 @@
+import { Item } from "@/components/AuctionItem";
 import { type ApiRoutes } from "@server/app";
-import { SelectItem } from "@server/shared-types";
+import { CreateItem } from "@server/shared-types";
+
 import { queryOptions } from "@tanstack/react-query";
 import { hc } from "hono/client";
 
@@ -49,7 +51,7 @@ export async function getItem(id: string) {
 }
 
 export const itemQueryOptions = (id: string) => {
-	return queryOptions<{ item?: SelectItem }>({
+	return queryOptions<{ item?: Item }>({
 		queryKey: ["get-item", id],
 		queryFn: async () => {
 			const data = await getItem(id);
@@ -60,3 +62,12 @@ export const itemQueryOptions = (id: string) => {
 		},
 	});
 };
+
+export async function createItem({ value }: { value: CreateItem }) {
+	const res = await api.items.$post({ json: value });
+	if (!res.ok) {
+		throw new Error("Server error creating new item");
+	}
+	const newItem = await res.json();
+	return newItem;
+}
