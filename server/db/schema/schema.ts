@@ -32,7 +32,7 @@ export const itemsTable = pgTable("items", {
 	auctionEndsAt: timestamp("auction_ends_at")
 		.default(sql`(now() + interval '24 hours')`)
 		.notNull(),
-	isPublished: boolean("is_published"),
+	isPublished: boolean("is_published").default(true),
 	startingPrice: numeric("starting_price", { precision: 12, scale: 2 }).notNull(),
 	currentOfferPrice: numeric("current_price", { precision: 12, scale: 2 }),
 	buyNowPrice: numeric("buy_price", { precision: 12, scale: 2 }),
