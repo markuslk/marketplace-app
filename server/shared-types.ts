@@ -7,6 +7,7 @@ export const createItemSchema = insertItemSchema.omit({
 	userId: true,
 	createdAt: true,
 	id: true,
+	isPublished: true,
 });
 
 export type CreateItem = z.infer<typeof createItemSchema>;
