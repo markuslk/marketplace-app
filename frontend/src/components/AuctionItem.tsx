@@ -39,7 +39,7 @@ const AuctionItem = ({ item }: { item: Item }) => {
 
 	return (
 		<div className="flex flex-col rounded-md border" key={item.id}>
-			<div className="relative aspect-square overflow-hidden rounded-md">
+			<div className="relative aspect-square overflow-hidden rounded-t-md">
 				<img src="/images/laptop-1.jpg" className="h-full w-full object-cover object-center" />
 			</div>
 			<div className="px-2 py-3 lg:p-4 text-center flex flex-col flex-grow">
