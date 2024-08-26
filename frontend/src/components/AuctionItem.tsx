@@ -15,6 +15,15 @@ export type Item = {
 	startingPrice: string;
 	currentOfferPrice: string | null;
 	buyNowPrice: string | null;
+	bids: Bid[] | Bid | undefined;
+};
+
+export type Bid = {
+	id: number;
+	userId: string;
+	createdAt: string;
+	itemId: number;
+	bidAmount: string;
 };
 
 const AuctionItem = ({ item }: { item: Item }) => {
