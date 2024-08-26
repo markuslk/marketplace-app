@@ -25,7 +25,7 @@ export const itemsTable = pgTable("items", {
 	id: serial("id").primaryKey(),
 	userId: text("user_id")
 		.notNull()
-		.references(() => usersTable.id),
+		.references(() => usersTable.id, { onDelete: "cascade" }),
 	title: text("title").notNull(),
 	description: text("description").notNull(),
 	createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -46,3 +46,19 @@ export const insertItemSchema = createInsertSchema(itemsTable, {
 });
 
 export const selectItemSchema = createSelectSchema(itemsTable);
+
+export const bidsTable = pgTable("bids", {
+	id: serial("id").primaryKey(),
+	userId: text("user_id")
+		.notNull()
+		.references(() => usersTable.id, { onDelete: "cascade" }),
+	itemId: serial("item_id")
+		.notNull()
+		.references(() => itemsTable.id, { onDelete: "cascade" }),
+	bidAmount: numeric("bid_amount", { precision: 12, scale: 2 }).notNull(),
+	createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBidSchema = createInsertSchema(bidsTable, {
+	bidAmount: z.string().regex(/^\d+(\.\d{1,2})?$/, { message: "Amount must be a valid monetary value" }),
+});

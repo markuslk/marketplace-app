@@ -1,6 +1,6 @@
-import { Item } from "@/components/AuctionItem";
+import { Bid, Item } from "@/components/AuctionItem";
 import { type ApiRoutes } from "@server/app";
-import { CreateItem } from "@server/shared-types";
+import { CreateBid, CreateItem } from "@server/shared-types";
 
 import { queryOptions } from "@tanstack/react-query";
 import { hc } from "hono/client";
@@ -57,6 +57,40 @@ export const itemQueryOptions = (id: string) => {
 			const data = await getItem(id);
 			if (!data) {
 				throw new Error("Error getting item");
+			}
+			return data;
+		},
+	});
+};
+
+export async function createBid({ value, id }: { value: CreateBid; id: string }) {
+	const res = await api.items[":id{[0-9]+}"].bids.$post({ json: value, param: { id } });
+
+	if (!res.ok) {
+		throw new Error("Server error creating new bid");
+	}
+	const newBid = await res.json();
+	return newBid;
+}
+
+export async function getBids(id: string) {
+	const res = await api.items[":id{[0-9]+}"].bids.$get({
+		param: { id },
+	});
+	if (!res.ok) {
+		throw new Error("Server error getting bids for current item");
+	}
+
+	return await res.json();
+}
+
+export const itemBidsQueryOptions = (id: string) => {
+	return queryOptions<Bid[]>({
+		queryKey: ["get-bids", id],
+		queryFn: async () => {
+			const data = await getBids(id);
+			if (!data) {
+				throw new Error("Error getting bids for item");
 			}
 			return data;
 		},
