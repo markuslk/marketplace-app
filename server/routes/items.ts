@@ -20,7 +20,7 @@ export const itemsRoute = new Hono<Context>()
 	})
 
 	.get("/:id{[0-9]+}", async (c) => {
-		const { id } = c.req.param();
+		const id = c.req.param("id");
 		const item = await db
 			.select()
 			.from(itemsTable)
@@ -37,9 +37,13 @@ export const itemsRoute = new Hono<Context>()
 		const item = await c.req.valid("json");
 		const user = c.var.user;
 
+		if (!user) {
+			throw new Error("No user found");
+		}
+
 		const validatedItem = insertItemSchema.parse({
 			...item,
-			userId: user?.id,
+			userId: user.id,
 		});
 
 		const result = await db
