@@ -1,12 +1,15 @@
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { getItem, itemQueryOptions } from "@/lib/api";
+import { createBid, getItem, itemQueryOptions } from "@/lib/api";
+import { createBidSchema } from "@server/shared-types";
+import { useForm } from "@tanstack/react-form";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { differenceInSeconds } from "date-fns";
 import { Eye, Share } from "lucide-react";
 import { useEffect, useState } from "react";
-// import { z } from "zod";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/items/$id")({
 	loader: async ({ params: { id } }) => await getItem(id),
@@ -17,9 +20,8 @@ function ItemComponent() {
 	const { id } = Route.useParams();
 	const { data } = useSuspenseQuery(itemQueryOptions(id));
 	const { item } = data;
-	const [count, setCount] = useState(
-		Number(item?.currentOfferPrice ? item?.currentOfferPrice : item?.startingPrice) + 1
-	);
+	// const queryClient = useQueryClient();
+	const [count, setCount] = useState(Number(item?.currentOfferPrice ? item?.currentOfferPrice : item?.startingPrice));
 	const currentDateTime = new Date(Date.now());
 	const auctionEndTime = new Date(item?.auctionEndsAt as string);
 	const [auctionTimeLeft, setAuctionTimeLeft] = useState<number>(
@@ -43,7 +45,7 @@ function ItemComponent() {
 	}, [auctionTimeLeft]);
 
 	function decrementBid() {
-		if (count > Number(item?.currentOfferPrice) + 1) {
+		if (count > Number(item?.currentOfferPrice) + 1 && count > Number(item?.startingPrice)) {
 			setCount((count) => count - 1);
 		}
 	}
@@ -62,6 +64,26 @@ function ItemComponent() {
 			maximumFractionDigits: 2,
 		}).format(value);
 	};
+
+	const form = useForm({
+		validatorAdapter: zodValidator(),
+		defaultValues: {
+			bidAmount: count.toString(),
+		},
+		onSubmit: async ({ value }) => {
+			try {
+				const newBid = await createBid({ value, id });
+
+				toast("Bid made successfully", {
+					description: `You bid ${newBid.bidAmount}€ for ${item?.title}.`,
+				});
+			} catch (error) {
+				toast("Error", {
+					description: `Failed to make a bid - ${error}`,
+				});
+			}
+		},
+	});
 
 	return (
 		<section className="px-4 py-6">
@@ -122,42 +144,66 @@ function ItemComponent() {
 						</div>
 					</div>
 					{/* Make offer section */}
-					<div className="bg-stone-200 rounded-md px-2 py-4 flex flex-col items-center">
-						{/* Bid */}
-						<div className="flex items-center flex-col">
-							<h4>Make your offer:</h4>
-							<div className="flex items-center py-4">
-								<div
-									onClick={decrementBid}
-									className={buttonVariants({
-										size: "icon",
-										className: "rounded-none rounded-tl-md rounded-bl-md cursor-pointer",
-									})}>
-									-
+					<form
+						onSubmit={(e) => {
+							e.preventDefault();
+							e.stopPropagation();
+							form.handleSubmit();
+						}}>
+						<div className="bg-stone-200 rounded-md px-2 py-4 flex flex-col items-center">
+							{/* Bid */}
+							<div className="flex items-center flex-col">
+								<h4>Make your offer:</h4>
+								<div className="flex items-center py-4">
+									<form.Field
+										name="bidAmount"
+										validators={{
+											onChange: createBidSchema.shape.bidAmount,
+										}}
+										children={(field) => {
+											return (
+												<>
+													<div
+														onClick={decrementBid}
+														className={buttonVariants({
+															size: "icon",
+															className:
+																"rounded-none rounded-tl-md rounded-bl-md cursor-pointer",
+														})}>
+														-
+													</div>
+													<Input
+														id={field.name}
+														name={field.name}
+														className="rounded-none border-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
+														value={formatCurrency(Number(field.state.value))}
+														onChange={(e) => field.handleChange(e.target.value)}
+														onBlur={field.handleBlur}
+													/>
+													<div
+														onClick={increaseBid}
+														className={buttonVariants({
+															size: "icon",
+															className:
+																"rounded-none rounded-tr-md rounded-br-md cursor-pointer",
+														})}>
+														+
+													</div>
+												</>
+											);
+										}}
+									/>
 								</div>
-								<Input
-									className="rounded-none border-none text-center focus-visible:ring-0 focus-visible:ring-offset-0"
-									value={formatCurrency(count)}
-									onChange={(e) => e.target.value}
-								/>
-								<div
-									onClick={increaseBid}
-									className={buttonVariants({
-										size: "icon",
-										className: "rounded-none rounded-tr-md rounded-br-md cursor-pointer",
-									})}>
-									+
-								</div>
+								<Button type="submit">Make your bid</Button>
 							</div>
-							<div className={buttonVariants({ className: "cursor-pointer" })}>Make your bid</div>
+							{/* Buy now */}
+							<p className="py-4">or</p>
+							<div
+								className={buttonVariants({
+									className: "cursor-pointer",
+								})}>{`Buy now for ${item?.buyNowPrice} €`}</div>
 						</div>
-						{/* Buy now */}
-						<p className="py-4">or</p>
-						<div
-							className={buttonVariants({
-								className: "cursor-pointer",
-							})}>{`Buy now for ${item?.buyNowPrice} €`}</div>
-					</div>
+					</form>
 					<div className="flex flex-col gap-4">
 						<div>{`Seller: First Name`}</div>
 						<p>{`Description: ${item?.description}`}</p>
@@ -167,10 +213,3 @@ function ItemComponent() {
 		</section>
 	);
 }
-
-// const schema = z.number().refine(
-// 	(n) => {
-// 		return n.toString().split(".")[1].length <= 2;
-// 	},
-// 	{ message: "Max precision is 2 decimal places" }
-// );
