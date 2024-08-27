@@ -15,7 +15,7 @@ export type Item = {
 	startingPrice: string;
 	currentOfferPrice: string | null;
 	buyNowPrice: string | null;
-	bids: Bid[] | Bid | undefined;
+	bids?: Bid[] | Bid;
 };
 
 export type Bid = {
