@@ -12,15 +12,22 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/items/$id")({
+	beforeLoad: ({ context }) => {
+		const user = context.user;
+		if (!user) {
+			return { user: null };
+		}
+		return { user };
+	},
 	loader: async ({ params: { id } }) => await getItem(id),
 	component: ItemComponent,
 });
 
 function ItemComponent() {
+	const { user } = Route.useRouteContext();
 	const { id } = Route.useParams();
 	const { data } = useSuspenseQuery(itemQueryOptions(id));
 	const { item } = data;
-	// const queryClient = useQueryClient();
 	const [count, setCount] = useState(Number(item?.currentOfferPrice ? item?.currentOfferPrice : item?.startingPrice));
 	const currentDateTime = new Date(Date.now());
 	const auctionEndTime = new Date(item?.auctionEndsAt as string);
@@ -71,6 +78,18 @@ function ItemComponent() {
 			bidAmount: count.toString(),
 		},
 		onSubmit: async ({ value }) => {
+			if (!user) {
+				toast("Error", {
+					description: "You must be logged in to make a bid",
+				});
+				return;
+			}
+			if (user.id === item?.userId) {
+				toast("Error", {
+					description: "You cannot bid on your own items",
+				});
+				return;
+			}
 			try {
 				const newBid = await createBid({ value, id });
 
@@ -194,7 +213,9 @@ function ItemComponent() {
 										}}
 									/>
 								</div>
-								<Button type="submit">Make your bid</Button>
+								<Button disabled={user?.id === item?.userId} type="submit">
+									Make your bid
+								</Button>
 							</div>
 							{/* Buy now */}
 							<p className="py-4">or</p>
@@ -204,9 +225,9 @@ function ItemComponent() {
 								})}>{`Buy now for ${item?.buyNowPrice} €`}</div>
 						</div>
 					</form>
-					<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-4 break-words break-all">
 						<div>{`Seller: First Name`}</div>
-						<p>{`Description: ${item?.description}`}</p>
+						<div>{`Description: ${item?.description}`}</div>
 					</div>
 				</div>
 			</div>
